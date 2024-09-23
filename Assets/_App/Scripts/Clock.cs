@@ -67,11 +67,8 @@ public class Clock
     {
         var localDateTime = DateTimeOffset.FromUnixTimeMilliseconds(utcTime).ToLocalTime();
         CurrentHour = localDateTime.Hour;
-
-        //CurrentMinute = localDateTime.Minute;
-        CurrentMinute = 59;
-        //CurrentSecond = localDateTime.Second;
-        CurrentSecond = 55;
+        CurrentMinute = localDateTime.Minute;
+        CurrentSecond = localDateTime.Second;
 
         Changed?.Invoke();
     }
