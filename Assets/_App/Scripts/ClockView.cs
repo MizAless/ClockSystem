@@ -11,10 +11,6 @@ public class ClockView : MonoBehaviour
 
     private Clock _clock;
 
-    private Tween _hourTween;
-
-    private bool _isFirstChange = true;
-
     private int CurrentHour => _clock.CurrentHour;
     private int CurrentMinute => _clock.CurrentMinute;
     private int CurrentSecond => _clock.CurrentSecond;
@@ -33,6 +29,9 @@ public class ClockView : MonoBehaviour
 
     private void AddListeners()
     {
+        _clock.SecondsChanged += UpdateSecondsHand;
+        _clock.MinutesChanged += UpdateMinutesHand;
+        _clock.HoursChanged += UpdateHoursHand;
         _clock.Changed += OnChanged;
     }
 
@@ -43,21 +42,26 @@ public class ClockView : MonoBehaviour
 
     private void OnChanged()
     {
-        UpdateClockHands();
         UpdateTimeText();
-
-        _isFirstChange = false;
     }
 
-    private void UpdateClockHands()
+
+    private void UpdateHoursHand()
+    {
+        float hourRotation = -((CurrentHour % 12) * 30);
+        _hourHand.DORotate(new Vector3(0, 0, hourRotation), 2f).SetEase(Ease.OutBack);
+    }
+
+    private void UpdateMinutesHand()
+    {
+        float minuteRotation = -(CurrentMinute * 6);
+        _minuteHand.DORotate(new Vector3(0, 0, minuteRotation), 1f).SetEase(Ease.InOutExpo);
+    }
+
+    private void UpdateSecondsHand()
     {
         float secondRotation = -(CurrentSecond * 6);
-        float minuteRotation = -(CurrentMinute * 6);
-        float hourRotation = -((CurrentHour % 12) * 30);
-
         _secondHand.DORotate(new Vector3(0, 0, secondRotation), 0.3f).SetEase(Ease.InOutExpo);
-        _minuteHand.DORotate(new Vector3(0, 0, minuteRotation), 1f).SetEase(Ease.InOutExpo);
-        _hourHand.DORotate(new Vector3(0, 0, hourRotation), 1f).SetEase(Ease.InExpo);
     }
 
     private void UpdateTimeText()

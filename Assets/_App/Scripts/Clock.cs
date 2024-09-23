@@ -8,6 +8,8 @@ public class Clock
     private int _currentMinute;
     private int _currentSecond;
 
+    private Coroutine _currentRoutine;
+
     public int CurrentHour
     {
         get { return _currentHour; }
@@ -17,8 +19,11 @@ public class Clock
 
             if (_currentHour >= 24)
                 CurrentHour %= 24;
+
+            HoursChanged?.Invoke();
         }
     }
+
     public int CurrentMinute
     {
         get { return _currentMinute; }
@@ -31,6 +36,8 @@ public class Clock
                 CurrentHour += CurrentMinute / 60;
                 CurrentMinute %= 60;
             }
+
+            MinutesChanged?.Invoke();
         }
     }
 
@@ -46,24 +53,35 @@ public class Clock
                 CurrentMinute += CurrentSecond / 60;
                 CurrentSecond %= 60;
             }
+
+            SecondsChanged?.Invoke();
         }
     }
 
+    public event Action HoursChanged;
+    public event Action MinutesChanged;
+    public event Action SecondsChanged;
     public event Action Changed;
 
     public void SetClock(long utcTime)
     {
         var localDateTime = DateTimeOffset.FromUnixTimeMilliseconds(utcTime).ToLocalTime();
         CurrentHour = localDateTime.Hour;
-        CurrentMinute = localDateTime.Minute;
-        CurrentSecond = localDateTime.Second;
+
+        //CurrentMinute = localDateTime.Minute;
+        CurrentMinute = 59;
+        //CurrentSecond = localDateTime.Second;
+        CurrentSecond = 55;
 
         Changed?.Invoke();
     }
 
     public void Start()
     {
-        CoroutineProvider.Instance.StartCoroutine(UpdatingClock());
+        if (_currentRoutine != null)
+            CoroutineProvider.Instance.StopCoroutine(_currentRoutine);
+
+        _currentRoutine = CoroutineProvider.Instance.StartCoroutine(UpdatingClock());
     }
 
     private IEnumerator UpdatingClock()

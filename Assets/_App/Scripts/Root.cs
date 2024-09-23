@@ -18,7 +18,7 @@ public class Root : MonoBehaviour
 
     private async void Start()
     {
-        await InitializeClock();
+        await StartTimeSynchronization();
     }
 
     private void Update()
@@ -30,6 +30,15 @@ public class Root : MonoBehaviour
         else
         {
             Time.timeScale = 1f;
+        }
+    }
+
+    private async Task StartTimeSynchronization()
+    {
+        while (true)
+        {
+            await InitializeClock();
+            await Task.Delay(TimeSpan.FromHours(1));
         }
     }
 
