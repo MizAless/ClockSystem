@@ -65,7 +65,7 @@ public class Clock
 
     public void SetClock(long utcTime)
     {
-        var localDateTime = DateTimeOffset.FromUnixTimeMilliseconds(utcTime).ToLocalTime();
+        var localDateTime = DateTimeOffset.FromUnixTimeSeconds(utcTime).ToLocalTime();
         CurrentHour = localDateTime.Hour;
         CurrentMinute = localDateTime.Minute;
         CurrentSecond = localDateTime.Second;
@@ -73,7 +73,14 @@ public class Clock
         Changed?.Invoke();
     }
 
-    public void Start()
+    public bool IsEqual(long utcTime)
+    {
+        var localDateTime = DateTimeOffset.FromUnixTimeSeconds(utcTime).ToLocalTime();
+
+        return localDateTime.Hour == CurrentHour && localDateTime.Minute == CurrentMinute && localDateTime.Second == CurrentSecond;
+    }
+
+    public void Restart()
     {
         if (_currentRoutine != null)
             CoroutineProvider.Instance.StopCoroutine(_currentRoutine);

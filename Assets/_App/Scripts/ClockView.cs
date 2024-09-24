@@ -37,6 +37,9 @@ public class ClockView : MonoBehaviour
 
     private void RemoveListeners()
     {
+        _clock.SecondsChanged -= UpdateSecondsHand;
+        _clock.MinutesChanged -= UpdateMinutesHand;
+        _clock.HoursChanged -= UpdateHoursHand;
         _clock.Changed -= OnChanged;
     }
 

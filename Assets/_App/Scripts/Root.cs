@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 public class Root : MonoBehaviour
 {
@@ -16,9 +16,9 @@ public class Root : MonoBehaviour
         _clockView.Init(_clock);
     }
 
-    private async void Start()
+    private void Start()
     {
-        await StartTimeSynchronization();
+        InitializeClock().Forget();
     }
 
     private void Update()
@@ -33,26 +33,53 @@ public class Root : MonoBehaviour
         }
     }
 
-    private async Task StartTimeSynchronization()
-    {
-        while (true)
-        {
-            await InitializeClock();
-            await Task.Delay(TimeSpan.FromHours(1));
-        }
-    }
-
-    private async Task InitializeClock()
+    private async UniTask InitializeClock()
     {
         try
         {
-            long utcTime = await _timeFetcher.FetchCurrentTimeAsync();
-            _clock.SetClock(utcTime);
-            _clock.Start();
+            CorrectOperation correctOpetarion = await Validate();
+
+            _clock.HoursChanged += CheckTimeSynchronization;
+
+            if (_clock.IsEqual(correctOpetarion.Responce) == false)
+            {
+                _clock.SetClock(correctOpetarion.Responce);
+                _clock.Restart();
+
+
+                
+                Debug.Log("Time synchronization was successful");
+            }
+            else
+            {
+                Debug.Log("Time synchronization was not required");
+            }
         }
         catch (Exception ex)
         {
             Debug.LogError(ex.Message);
         }
+    }
+
+    private void CheckTimeSynchronization()
+    {
+        _clock.HoursChanged -= CheckTimeSynchronization;
+        InitializeClock().Forget();
+    }
+
+    private async UniTask<CorrectOperation> Validate()
+    {
+        CorrectOperation correctOpetarion;
+
+        do
+        {
+            correctOpetarion = await _timeFetcher.FetchCurrentTimeAsync();
+
+            if (correctOpetarion.OperationResult == true)
+                break;
+        }
+        while (correctOpetarion.OperationResult == false);
+
+        return correctOpetarion;
     }
 }

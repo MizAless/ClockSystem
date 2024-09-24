@@ -1,43 +1,63 @@
-using System.Threading.Tasks;
 using System;
 using UnityEngine.Networking;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
-public class TimeFetcher 
+public class TimeFetcher
 {
-    private const string _timeUrl = "https://yandex.com/time/sync.json";
+    private const string _timeUrl = "http://worldtimeapi.org/api/ip";
 
-    public async Task<long> FetchCurrentTimeAsync()
+    public async UniTask<CorrectOperation> FetchCurrentTimeAsync()
     {
         using (UnityWebRequest webRequest = UnityWebRequest.Get(_timeUrl))
         {
-            var operation = webRequest.SendWebRequest();
+            webRequest.timeout = 1;
 
-            while (!operation.isDone)
+            try
             {
-                await Task.Delay(100);
-            }
+                await webRequest.SendWebRequest().ToUniTask();
 
-            if (webRequest.result == UnityWebRequest.Result.ConnectionError || webRequest.result == UnityWebRequest.Result.ProtocolError)
+                if (webRequest.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError(webRequest.error);
+                    throw new Exception("Failed to fetch time from server");
+                }
+
+                var jsonResponse = webRequest.downloadHandler.text;
+
+                return new CorrectOperation(true, ParseTime(jsonResponse));
+
+
+            }
+            catch (Exception error)
             {
-                Debug.LogError(webRequest.error);
-                throw new Exception("Failed to fetch time from server");
+                Debug.LogError(error);
+                return new CorrectOperation(false);
             }
-
-            var jsonResponse = webRequest.downloadHandler.text;
-            return ParseTime(jsonResponse);
         }
     }
 
     private long ParseTime(string json)
     {
         var data = JsonUtility.FromJson<TimeData>(json);
-        return data.time;
+        return data.unixtime;
     }
 
     [Serializable]
     public class TimeData
     {
-        public long time;
+        public long unixtime;
+    }
+}
+
+public class CorrectOperation
+{
+    public bool OperationResult { get; private set; }
+    public long Responce { get; private set; }
+
+    public CorrectOperation(bool operationResult, long responce = 0)
+    {
+        OperationResult = operationResult;
+        Responce = responce;
     }
 }
